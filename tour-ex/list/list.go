@@ -13,12 +13,12 @@ func (l *List[T]) AddLast(val T) *List[T] {
 		return l
 	}
 
-	head := l
-	for head.next != nil {
-		head = head.next
+	curr := l
+	for curr.next != nil {
+		curr = curr.next
 	}
 
-	head.next = &List[T]{val: val}
+	curr.next = &List[T]{val: val}
 	return l
 }
 
