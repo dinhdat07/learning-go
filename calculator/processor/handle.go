@@ -18,6 +18,7 @@ var precedence = map[rune]int{
 	'*': 2,
 	'/': 2,
 	'~': 3,
+	'^': 4,
 }
 
 func Handle(input string) (float64, error) {
@@ -58,17 +59,6 @@ func Handle(input string) (float64, error) {
 				return 0, ErrInvalidExpression
 			}
 
-			//check unary marker
-			top, ok := OpStack.Peek()
-			if ok && top == '~' {
-				OpStack.Pop()
-				v, okv := NumStack.Pop() // pop the num added by popAndCompute
-				if !okv {
-					return 0, ErrInvalidExpression
-				}
-				NumStack.Push(-v)
-			}
-
 			prevIsValue = true
 			continue
 		}
@@ -97,7 +87,10 @@ func Handle(input string) (float64, error) {
 					}
 
 					i = nextI
-					NumStack.Push(sign * num)
+					NumStack.Push(num)
+					if sign < 0 {
+						OpStack.Push('~')
+					}
 					prevIsValue = true
 					continue
 				}
@@ -124,7 +117,7 @@ func Handle(input string) (float64, error) {
 					break
 				}
 
-				if hasLowerPrecedence(top, c) {
+				if !shouldPop(top, c) {
 					break
 				}
 
@@ -219,6 +212,12 @@ func popAndCompute(NumStack *Stack[float64], OpStack *Stack[rune]) error {
 			return err
 		}
 		num = ans
+	case '^':
+		ans, err := math.Pow(a, b)
+		if err != nil {
+			return err
+		}
+		num = ans
 	default:
 		return ErrInvalidExpression
 	}
@@ -227,9 +226,14 @@ func popAndCompute(NumStack *Stack[float64], OpStack *Stack[rune]) error {
 	return nil
 }
 
-func hasLowerPrecedence(top, curr rune) bool {
-	// precedence(top) < precedence(curr): true
-	return precedence[top] < precedence[curr]
+func shouldPop(top, curr rune) bool {
+	// right-associative
+	if curr == '^' {
+		return precedence[top] > precedence[curr]
+	}
+
+	// left-associative
+	return precedence[top] >= precedence[curr]
 }
 
 func parseNumber(input string, i int) (float64, int, error) {
