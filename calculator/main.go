@@ -1,19 +1,22 @@
 package main
 
 import (
+	"bufio"
 	"calculator/processor"
 	"fmt"
+	"os"
+	"strings"
 )
 
 func main() {
-	var input string
 	fmt.Println("======= CLI CALCULATOR ========")
-
 	for {
-		fmt.Print("\nPlease input the expression: ")
-		fmt.Scanln(&input)
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Please input the expression: ")
+		line, _ := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
 
-		ans, err := processor.Handle(input)
+		ans, err := processor.Handle(line)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		} else {
