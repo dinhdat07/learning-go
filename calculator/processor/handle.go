@@ -2,7 +2,7 @@ package processor
 
 import (
 	calError "calculator/error"
-	. "calculator/internal"
+	"calculator/internal/stack"
 	"calculator/internal/utils"
 )
 
@@ -68,8 +68,8 @@ func (c *Calculator) SetHasAns(hasAns bool) {
 }
 
 func (calculator *Calculator) Handle(input string) (float64, error) {
-	NumStack := NewStack[float64](0)
-	OpStack := NewStack[rune](0)
+	NumStack := stack.New[float64](0)
+	OpStack := stack.New[rune](0)
 	prevIsValue := false
 
 	for i := 0; i < len(input); i++ {

@@ -1,4 +1,4 @@
-package internal
+package stack
 
 // Stack is a LIFO data structure.
 type Stack[T any] struct {
@@ -6,7 +6,7 @@ type Stack[T any] struct {
 }
 
 // New creates a stack with optional initial capacity.
-func NewStack[T any](cap ...int) *Stack[T] {
+func New[T any](cap ...int) *Stack[T] {
 	switch len(cap) {
 	case 0:
 		return &Stack[T]{s: nil}

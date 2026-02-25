@@ -1,11 +1,11 @@
 package processor
 
 import (
-	. "calculator/internal"
+	"calculator/internal/stack"
 	"calculator/math"
 )
 
-func popAndCompute(NumStack *Stack[float64], OpStack *Stack[rune]) error {
+func popAndCompute(NumStack *stack.Stack[float64], OpStack *stack.Stack[rune]) error {
 	op, okc := OpStack.Pop()
 	if !okc {
 		return ErrInvalidExpression
