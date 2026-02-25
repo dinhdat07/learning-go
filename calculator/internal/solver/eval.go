@@ -1,8 +1,8 @@
-package processor
+package solver
 
 import (
+	"calculator/internal/engine"
 	"calculator/internal/stack"
-	"calculator/math"
 )
 
 func popAndCompute(NumStack *stack.Stack[float64], OpStack *stack.Stack[rune]) error {
@@ -31,19 +31,19 @@ func popAndCompute(NumStack *stack.Stack[float64], OpStack *stack.Stack[rune]) e
 	var num float64
 	switch op {
 	case '+':
-		num = math.Add(a, b)
+		num = engine.Add(a, b)
 	case '-':
-		num = math.Sub(a, b)
+		num = engine.Sub(a, b)
 	case '*':
-		num = math.Mul(a, b)
+		num = engine.Mul(a, b)
 	case '/':
-		ans, err := math.Div(a, b)
+		ans, err := engine.Div(a, b)
 		if err != nil {
 			return err
 		}
 		num = ans
 	case '^':
-		ans, err := math.Pow(a, b)
+		ans, err := engine.Pow(a, b)
 		if err != nil {
 			return err
 		}

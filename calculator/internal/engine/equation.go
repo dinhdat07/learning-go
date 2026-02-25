@@ -1,16 +1,8 @@
-package math
+package engine
 
 import (
-	calError "calculator/error"
 	"math"
 )
-
-var ErrInvalidInput = &calError.SyntaxError{
-	Message: "incorrect number of values in input",
-}
-var ErrNoSolution = &calError.MathError{
-	Message: "the equation has no solution",
-}
 
 func SolveLinear(nums []float64) ([]float64, error) {
 	// ax + b = 0

@@ -1,27 +1,9 @@
-package processor
+package solver
 
 import (
-	calError "calculator/error"
 	"calculator/internal/stack"
 	"calculator/internal/utils"
 )
-
-var ErrInvalidExpression = &calError.SyntaxError{
-	Message: "invalid expression syntax",
-}
-
-var ErrInvalidVarName = &calError.SyntaxError{
-	Message: "variable name must contain only letters and no spaces",
-}
-
-var precedence = map[rune]int{
-	'+': 1,
-	'-': 1,
-	'*': 2,
-	'/': 2,
-	'~': 3,
-	'^': 4,
-}
 
 type Calculator struct {
 	hasAns    bool // to check if the prev equation/expression have valid result
@@ -45,14 +27,6 @@ func (c *Calculator) SaveVar(name string, value float64) error {
 	}
 	c.variables[name] = value
 	return nil
-}
-
-func (c *Calculator) Ans() float64 {
-	return c.ans
-}
-
-func (c *Calculator) PreAns() float64 {
-	return c.preAns
 }
 
 func (c *Calculator) SetAns(ans float64) {
@@ -127,7 +101,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 				// next is number
 				next := input[i]
 				if (next >= '0' && next <= '9') || next == '.' {
-					num, nextI, err := parseNumber(input, i)
+					num, nextI, err := utils.ParseNumber(input, i)
 					if err != nil {
 						return 0, err
 					}
@@ -178,7 +152,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 		}
 
 		if (c >= '0' && c <= '9') || c == '.' {
-			num, nextI, err := parseNumber(input, i)
+			num, nextI, err := utils.ParseNumber(input, i)
 			if err != nil {
 				return 0, err
 			}
@@ -190,7 +164,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 		}
 
 		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
-			num, nextI, err := parseKeyword(calculator, input, i)
+			num, nextI, err := utils.ParseKeyword(input, i, calculator.ans, calculator.preAns, calculator.variables)
 			if err != nil {
 				return 0, err
 			}

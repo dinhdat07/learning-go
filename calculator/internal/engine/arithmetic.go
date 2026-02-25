@@ -1,17 +1,8 @@
-package math
+package engine
 
 import (
-	calError "calculator/error"
 	gomath "math"
 )
-
-var ErrDivideByZero = &calError.MathError{
-	Message: "division by zero is not allowed",
-}
-
-var ErrInvalidPower = &calError.MathError{
-	Message: "invalid exponent operation",
-}
 
 func Add(a, b float64) float64 {
 	return a + b

@@ -2,14 +2,14 @@ package main
 
 import (
 	"bufio"
+	"calculator/internal/engine"
+	"calculator/internal/solver"
 	"calculator/internal/utils"
-	"calculator/math"
-	"calculator/processor"
 	"fmt"
 	"strings"
 )
 
-func runExpression(calculator *processor.Calculator, reader *bufio.Reader) {
+func runExpression(calculator *solver.Calculator, reader *bufio.Reader) {
 	for {
 		fmt.Println("\nExpression Mode")
 		fmt.Println("Enter a mathematical expression to evaluate.")
@@ -26,6 +26,7 @@ func runExpression(calculator *processor.Calculator, reader *bufio.Reader) {
 			fmt.Printf("Could not evaluate expression: %v\n", err)
 			calculator.SetHasAns(false)
 		} else {
+			ans = utils.CleanFloat(ans)
 			fmt.Printf("Result: %g\n", ans)
 			calculator.SetHasAns(true)
 			calculator.SetAns(ans)
@@ -37,7 +38,7 @@ func runExpression(calculator *processor.Calculator, reader *bufio.Reader) {
 	}
 }
 
-func runEquation(calculator *processor.Calculator, reader *bufio.Reader) {
+func runEquation(calculator *solver.Calculator, reader *bufio.Reader) {
 	for {
 		fmt.Println("\nEquation Mode")
 		fmt.Print("\nLinear equation: a*x + b = 0")
@@ -63,7 +64,7 @@ func runEquation(calculator *processor.Calculator, reader *bufio.Reader) {
 			continue
 		}
 
-		nums, err := processor.ParseFloatList(line)
+		nums, err := utils.ParseFloatList(line)
 		if err != nil {
 			fmt.Printf("Invalid number format: %v\n", err)
 			fmt.Println("Please enter numbers separated by spaces")
@@ -77,9 +78,9 @@ func runEquation(calculator *processor.Calculator, reader *bufio.Reader) {
 
 		var ans []float64
 		if opt == 1 {
-			ans, err = math.SolveLinear(nums)
+			ans, err = engine.SolveLinear(nums)
 		} else {
-			ans, err = math.SolveQuadratic(nums)
+			ans, err = engine.SolveQuadratic(nums)
 		}
 
 		if err != nil {
@@ -96,7 +97,7 @@ func runEquation(calculator *processor.Calculator, reader *bufio.Reader) {
 	}
 }
 
-func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
+func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader) {
 	for {
 		opt := utils.ReadInt(reader, "\nSolve Linear System\nEnter number of equations (0 to return to main menu):\n> ")
 
@@ -130,7 +131,7 @@ func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
 					continue
 				}
 
-				list, err := processor.ParseFloatList(line)
+				list, err := utils.ParseFloatList(line)
 				if err != nil {
 					fmt.Printf("Invalid number format: %v\n", err)
 					fmt.Println("Please enter numbers separated by spaces, for example: 1 2 -3 4")
@@ -150,7 +151,7 @@ func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
 
 		fmt.Println("\nSolving the system...")
 
-		ans, err := math.SolveLinearSystem(matrix)
+		ans, err := engine.SolveLinearSystem(matrix)
 		if err != nil {
 			fmt.Printf("Failed to solve the system: %v\n", err)
 			fmt.Println("The system may have no solution or infinitely many solutions.")
@@ -166,7 +167,7 @@ func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
 	}
 }
 
-func chooseNextStep(calculator *processor.Calculator, reader *bufio.Reader, ans ...float64) (isBack bool) {
+func chooseNextStep(calculator *solver.Calculator, reader *bufio.Reader, ans ...float64) (isBack bool) {
 	for {
 		opt := utils.ReadInt(reader, "\nWhat would you like to do next?\n1. Continue\n2. Save result to a variable\n3. Exit this mode\n> ")
 

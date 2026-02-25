@@ -1,15 +1,10 @@
-package math
+package engine
 
 import (
-	calError "calculator/error"
 	"fmt"
 
 	"gonum.org/v1/gonum/mat"
 )
-
-var ErrLSCannotSolved = &calError.MathError{
-	Message: "the system does not have a unique solution",
-}
 
 func SolveLinearSystem(matrix [][]float64) ([]float64, error) {
 	if len(matrix) == 0 {

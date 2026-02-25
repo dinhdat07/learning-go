@@ -1,16 +1,11 @@
-package processor
+package utils
 
 import (
-	calError "calculator/error"
 	"strconv"
 	"strings"
 )
 
-var ErrInvalidFloatList = &calError.SyntaxError{
-	Message: "input must be a list of valid numbers",
-}
-
-func parseNumber(input string, i int) (float64, int, error) {
+func ParseNumber(input string, i int) (float64, int, error) {
 	start := i
 	dot := 0
 
@@ -41,7 +36,7 @@ func parseNumber(input string, i int) (float64, int, error) {
 	return num, i - 1, nil
 }
 
-func parseKeyword(calculator *Calculator, input string, i int) (float64, int, error) {
+func ParseKeyword(input string, i int, ans, preAns float64, variables map[string]float64) (float64, int, error) {
 	start := i
 
 	for i < len(input) {
@@ -57,11 +52,11 @@ func parseKeyword(calculator *Calculator, input string, i int) (float64, int, er
 
 	switch keyword {
 	case "ans":
-		return calculator.ans, i - 1, nil
+		return ans, i - 1, nil
 	case "preAns":
-		return calculator.preAns, i - 1, nil
+		return preAns, i - 1, nil
 	default:
-		if val, ok := calculator.variables[keyword]; ok {
+		if val, ok := variables[keyword]; ok {
 			return val, i - 1, nil
 		}
 		return 0, i, ErrInvalidExpression

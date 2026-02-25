@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
+	"calculator/internal/solver"
 	"calculator/internal/utils"
-	"calculator/processor"
 	"fmt"
 	"os"
 )
@@ -12,7 +12,7 @@ func main() {
 	fmt.Println("CLI CALCULATOR")
 	fmt.Println("Type a menu number and press Enter.")
 
-	calculator := processor.NewCalculator()
+	calculator := solver.NewCalculator()
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
