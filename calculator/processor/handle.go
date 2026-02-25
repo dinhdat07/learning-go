@@ -11,7 +11,7 @@ var ErrInvalidExpression = &calError.SyntaxError{
 }
 
 var ErrInvalidVarName = &calError.SyntaxError{
-	Message: "variable name must contain only letters (a-z or A-Z) and no spaces",
+	Message: "variable name must contain only letters and no spaces",
 }
 
 var precedence = map[rune]int{

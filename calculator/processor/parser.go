@@ -7,7 +7,7 @@ import (
 )
 
 var ErrInvalidFloatList = &calError.SyntaxError{
-	Message: "invalid float list",
+	Message: "input must be a list of valid numbers",
 }
 
 func parseNumber(input string, i int) (float64, int, error) {

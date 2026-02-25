@@ -6,11 +6,10 @@ import (
 )
 
 var ErrInvalidInput = &calError.SyntaxError{
-	Message: "invalid input list (too much or not enough)",
+	Message: "incorrect number of values in input",
 }
-
 var ErrNoSolution = &calError.MathError{
-	Message: "no solution",
+	Message: "the equation has no solution",
 }
 
 func SolveLinear(nums []float64) ([]float64, error) {
@@ -32,7 +31,7 @@ func SolveLinear(nums []float64) ([]float64, error) {
 
 func SolveQuadratic(nums []float64) ([]float64, error) {
 	// ax^2 + b^x + c = 0
-	// delta = b^2 - 4 *a*C
+	// delta = b^2 - 4 *a*c
 
 	if len(nums) != 3 {
 		return nil, ErrInvalidInput

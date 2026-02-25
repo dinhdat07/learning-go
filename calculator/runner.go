@@ -11,24 +11,27 @@ import (
 
 func runExpression(calculator *processor.Calculator, reader *bufio.Reader) {
 	for {
-		expr := utils.ReadLine(reader, "Please input the expression: ")
+		fmt.Println("\nExpression Mode")
+		fmt.Println("Enter a mathematical expression to evaluate.")
+		fmt.Println("Examples: 2+3*4, (1+2)/3, ans+5 (if supported)")
+
+		expr := utils.ReadLine(reader, "> ")
 		if expr == "" {
-			fmt.Println("Empty expression, try again.")
+			fmt.Println("Input cannot be empty. Please enter an expression.")
 			continue
 		}
 
 		ans, err := calculator.Handle(expr)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("Could not evaluate expression: %v\n", err)
 			calculator.SetHasAns(false)
 		} else {
-			fmt.Printf("Answer: %g\n", ans)
+			fmt.Printf("Result: %g\n", ans)
 			calculator.SetHasAns(true)
 			calculator.SetAns(ans)
 		}
 
-		isBack := chooseNextStep(calculator, reader, ans)
-		if isBack {
+		if isBack := chooseNextStep(calculator, reader, ans); isBack {
 			return
 		}
 	}
@@ -36,90 +39,60 @@ func runExpression(calculator *processor.Calculator, reader *bufio.Reader) {
 
 func runEquation(calculator *processor.Calculator, reader *bufio.Reader) {
 	for {
-
-		finalAns := make([]float64, 0)
-		opt := utils.ReadInt(reader, "\nDegree of equation (currently support 1 - 2), 0 to back to main menu:\n>")
-
-		switch opt {
-		case 1:
-			for {
-				fmt.Println("\nDegree 1: a*x + b = 0")
-				line := utils.ReadLine(reader, "Input a b: ")
-
-				if line == "" {
-					fmt.Println("Empty list, please input exact 2 numbers")
-					continue
-				}
-
-				nums, err := processor.ParseFloatList(line)
-				if err != nil {
-					fmt.Println("Error", err)
-					continue
-				}
-
-				if len(nums) != 2 {
-					fmt.Println("Please input exact 2 numbers")
-					continue
-				}
-
-				ans, err := math.SolveLinear(nums)
-				if err != nil {
-					fmt.Printf("Error: %v\n", err)
-					calculator.SetHasAns(false)
-				} else {
-					fmt.Printf("Answer: %g\n", ans[0])
-					calculator.SetHasAns(true)
-					finalAns = ans
-				}
-
-				break
-			}
-
-		case 2:
-			for {
-				fmt.Println("\nDegree 2: a*x^2 + b*x + c = 0")
-				line := utils.ReadLine(reader, "Input a b c: ")
-
-				if line == "" {
-					fmt.Println("Empty list, please input exact 3 numbers")
-					continue
-				}
-
-				nums, err := processor.ParseFloatList(line)
-				if err != nil {
-					fmt.Println("Error", err)
-					continue
-				}
-
-				if len(nums) != 3 {
-					fmt.Println("Empty list, please input exact 3 numbers")
-					continue
-				}
-
-				ans, err := math.SolveQuadratic(nums)
-				if err != nil {
-					fmt.Printf("Error: %v\n", err)
-					calculator.SetHasAns(false)
-				} else {
-					fmt.Printf("Answer: %g\n", ans)
-					calculator.SetHasAns(true)
-					finalAns = ans
-				}
-
-				break
-
-			}
-
-		case 0:
-			return
-		default:
-			fmt.Println("Not a valid option, please choose 0/1/2.")
-		}
-
-		if isBack := chooseNextStep(calculator, reader, finalAns...); isBack {
+		fmt.Println("\nEquation Mode")
+		fmt.Print("\nLinear equation: a*x + b = 0")
+		fmt.Print("\nQuadratic equation: a*x^2 + b*x + c = 0")
+		opt := utils.ReadInt(reader, "\nChoose equation degree (1 or 2). Enter 0 to return to main menu:\n>")
+		if opt == 0 {
+			fmt.Println("Returning to main menu.")
 			return
 		}
 
+		if opt < 0 || opt > 2 {
+			fmt.Println("Invalid option. Please choose 0, 1, or 2.")
+			continue
+		}
+
+		required := opt + 1
+		fmt.Printf("Enter %d numbers: \n", required)
+
+		line := utils.ReadLine(reader, "> ")
+
+		if line == "" {
+			fmt.Printf("Input cannot be empty. Please enter exactly %d numbers.", required)
+			continue
+		}
+
+		nums, err := processor.ParseFloatList(line)
+		if err != nil {
+			fmt.Printf("Invalid number format: %v\n", err)
+			fmt.Println("Please enter numbers separated by spaces")
+			continue
+		}
+
+		if len(nums) != required {
+			fmt.Printf("Incorrect number of values. Expected %d but received %d.\n", required, len(nums))
+			continue
+		}
+
+		var ans []float64
+		if opt == 1 {
+			ans, err = math.SolveLinear(nums)
+		} else {
+			ans, err = math.SolveQuadratic(nums)
+		}
+
+		if err != nil {
+			fmt.Printf("Failed to solve the equation: %v\n", err)
+			calculator.SetHasAns(false)
+		} else {
+			utils.PrintSolutions(ans)
+			calculator.SetHasAns(true)
+		}
+
+		if isBack := chooseNextStep(calculator, reader, ans...); isBack {
+			return
+		}
 	}
 }
 
@@ -183,7 +156,7 @@ func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
 			fmt.Println("The system may have no solution or infinitely many solutions.")
 			calculator.SetHasAns(false)
 		} else {
-			fmt.Printf("Solution:\n%g\n", ans)
+			utils.PrintSolutions(ans)
 			calculator.SetHasAns(true)
 		}
 
@@ -195,23 +168,31 @@ func runLinearSystem(calculator *processor.Calculator, reader *bufio.Reader) {
 
 func chooseNextStep(calculator *processor.Calculator, reader *bufio.Reader, ans ...float64) (isBack bool) {
 	for {
-		opt := utils.ReadInt(reader, "\nChoose what you want to do next:\n1. Continue\n2. Save as a variable\n3. Exit this mode\n> ")
+		opt := utils.ReadInt(reader, "\nWhat would you like to do next?\n1. Continue\n2. Save result to a variable\n3. Exit this mode\n> ")
 
 		switch opt {
 		case 1:
 			return false
+
 		case 2:
 			if !calculator.HasAns() {
-				fmt.Println("No valid answer to save. Please calculate a valid expression first.")
+				fmt.Println("There is no valid result to save. Please compute a valid result first.")
+				continue
+			}
+
+			if len(ans) == 0 {
+				fmt.Println("There is no result available to save.")
 				continue
 			}
 
 			chosenAns := ans[0]
 			if len(ans) > 1 {
+				fmt.Println("\nMultiple results detected.")
+				fmt.Println("Select which result to save (1-based index).")
 				for {
-					index := utils.ReadInt(reader, "\nChoose index of the answer list (1-indexed):\n>")
+					index := utils.ReadInt(reader, "> ")
 					if index <= 0 || index > len(ans) {
-						fmt.Println("invalid index, try again")
+						fmt.Printf("Invalid index. Please choose a number between 1 and %d.\n", len(ans))
 						continue
 					}
 					chosenAns = ans[index-1]
@@ -219,20 +200,33 @@ func chooseNextStep(calculator *processor.Calculator, reader *bufio.Reader, ans 
 				}
 			}
 
-			name := utils.ReadLine(reader, "Variable name (no spaces): ")
-			name = strings.TrimSpace(name)
+			for {
+				name := utils.ReadLine(reader, "Enter variable name (only letters, no spaces):\n> ")
+				name = strings.TrimSpace(name)
 
-			if err := calculator.SaveVar(name, chosenAns); err != nil {
-				fmt.Printf("Save variable failed: %v\n", err)
-				continue
+				if name == "" {
+					fmt.Println("Variable name cannot be empty.")
+					continue
+				}
+				if strings.ContainsAny(name, " \t\n") {
+					fmt.Println("Variable name cannot contain spaces. Please try again.")
+					continue
+				}
+
+				if err := calculator.SaveVar(name, chosenAns); err != nil {
+					fmt.Printf("Could not save variable: %v\n", err)
+					continue
+				}
+
+				fmt.Printf("Saved '%s' = %g\n", name, chosenAns)
+				return true
 			}
-			fmt.Println("Saved.")
-			return true
 
 		case 3:
 			return true
+
 		default:
-			fmt.Println("Not a valid option, please choose 1/2/3.")
+			fmt.Println("Invalid option. Please choose 1, 2, or 3.")
 		}
 	}
 }

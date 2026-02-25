@@ -9,13 +9,21 @@ import (
 )
 
 func main() {
-	fmt.Println("======= CLI CALCULATOR ========")
+	fmt.Println("CLI CALCULATOR")
+	fmt.Println("Type a menu number and press Enter.")
 
 	calculator := processor.NewCalculator()
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		opt := utils.ReadInt(reader, "\nChoose what you want:\n1. Expression\n2. Equation\n3. Linear System\n4. Exit\n>")
+		opt := utils.ReadInt(reader,
+			"\nMain Menu\n"+
+				"1. Expression\n"+
+				"2. Equation\n"+
+				"3. Linear System\n"+
+				"4. Exit\n"+
+				"> ",
+		)
 
 		switch opt {
 		case 1:
@@ -25,10 +33,10 @@ func main() {
 		case 3:
 			runLinearSystem(calculator, reader)
 		case 4:
+			fmt.Println("Goodbye.")
 			return
 		default:
-			fmt.Println("Not a valid option, please choose 1/2/3.")
+			fmt.Printf("Invalid option (%d). Please choose 1, 2, 3, or 4.\n", opt)
 		}
 	}
-
 }

@@ -8,7 +8,7 @@ import (
 )
 
 var ErrLSCannotSolved = &calError.MathError{
-	Message: "canoot solve (no solution or infinite solution)",
+	Message: "the system does not have a unique solution",
 }
 
 func SolveLinearSystem(matrix [][]float64) ([]float64, error) {
