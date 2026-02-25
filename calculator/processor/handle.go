@@ -4,12 +4,14 @@ import (
 	calError "calculator/error"
 	. "calculator/internal"
 	"calculator/internal/utils"
-	"calculator/math"
-	"strconv"
 )
 
 var ErrInvalidExpression = &calError.SyntaxError{
 	Message: "invalid expression syntax",
+}
+
+var ErrInvalidVarName = &calError.SyntaxError{
+	Message: "variable name must contain only letters (a-z or A-Z) and no spaces",
 }
 
 var precedence = map[rune]int{
@@ -21,7 +23,51 @@ var precedence = map[rune]int{
 	'^': 4,
 }
 
-func Handle(input string) (float64, error) {
+type Calculator struct {
+	hasAns    bool // to check if the prev equation/expression have valid result
+	ans       float64
+	preAns    float64
+	variables map[string]float64
+}
+
+func NewCalculator() *Calculator {
+	return &Calculator{
+		hasAns:    false,
+		ans:       0,
+		preAns:    0,
+		variables: make(map[string]float64),
+	}
+}
+
+func (c *Calculator) SaveVar(name string, value float64) error {
+	if !isValidVarName(name) {
+		return ErrInvalidVarName
+	}
+	c.variables[name] = value
+	return nil
+}
+
+func (c *Calculator) Ans() float64 {
+	return c.ans
+}
+
+func (c *Calculator) PreAns() float64 {
+	return c.preAns
+}
+
+func (c *Calculator) SetAns(ans float64) {
+	c.preAns, c.ans = c.ans, ans
+}
+
+func (c *Calculator) HasAns() bool {
+	return c.hasAns
+}
+
+func (c *Calculator) SetHasAns(hasAns bool) {
+	c.hasAns = hasAns
+}
+
+func (calculator *Calculator) Handle(input string) (float64, error) {
 	NumStack := NewStack[float64](0)
 	OpStack := NewStack[rune](0)
 	prevIsValue := false
@@ -143,6 +189,20 @@ func Handle(input string) (float64, error) {
 			continue
 		}
 
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
+			num, nextI, err := parseKeyword(calculator, input, i)
+			if err != nil {
+				return 0, err
+			}
+
+			i = nextI
+
+			NumStack.Push(num)
+			prevIsValue = true
+			continue
+
+		}
+
 		return 0, ErrInvalidExpression
 	}
 
@@ -172,97 +232,7 @@ func Handle(input string) (float64, error) {
 	}
 
 	result, _ := NumStack.Peek()
+	calculator.preAns = calculator.ans
+	calculator.ans = result
 	return result, nil
-}
-
-func popAndCompute(NumStack *Stack[float64], OpStack *Stack[rune]) error {
-	op, okc := OpStack.Pop()
-	if !okc {
-		return ErrInvalidExpression
-	}
-
-	// unary minus marker: 1 operand
-	if op == '~' {
-		b, okb := NumStack.Pop()
-		if !okb {
-			return ErrInvalidExpression
-		}
-		NumStack.Push(-b)
-		return nil
-	}
-
-	// binary operators 2 operands
-	b, okb := NumStack.Pop()
-	a, oka := NumStack.Pop()
-	if !okb || !oka {
-		return ErrInvalidExpression
-	}
-
-	var num float64
-	switch op {
-	case '+':
-		num = math.Add(a, b)
-	case '-':
-		num = math.Sub(a, b)
-	case '*':
-		num = math.Mul(a, b)
-	case '/':
-		ans, err := math.Div(a, b)
-		if err != nil {
-			return err
-		}
-		num = ans
-	case '^':
-		ans, err := math.Pow(a, b)
-		if err != nil {
-			return err
-		}
-		num = ans
-	default:
-		return ErrInvalidExpression
-	}
-
-	NumStack.Push(num)
-	return nil
-}
-
-func shouldPop(top, curr rune) bool {
-	// right-associative
-	if curr == '^' {
-		return precedence[top] > precedence[curr]
-	}
-
-	// left-associative
-	return precedence[top] >= precedence[curr]
-}
-
-func parseNumber(input string, i int) (float64, int, error) {
-	start := i
-	dot := 0
-
-	for i < len(input) {
-		ch := input[i]
-
-		if ch == '.' {
-			dot++
-			if dot > 1 {
-				return 0, i, ErrInvalidExpression
-			}
-			i++
-			continue
-		}
-
-		if ch < '0' || ch > '9' {
-			break
-		}
-
-		i++
-	}
-
-	numStr := input[start:i]
-	num, err := strconv.ParseFloat(numStr, 64)
-	if err != nil {
-		return 0, i, ErrInvalidExpression
-	}
-	return num, i - 1, nil
 }
