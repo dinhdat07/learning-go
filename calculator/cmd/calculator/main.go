@@ -3,12 +3,22 @@ package main
 import (
 	"bufio"
 	"calculator/internal/solver"
+	"calculator/internal/storage"
 	"calculator/internal/utils"
 	"fmt"
+	"log"
 	"os"
 )
 
 func main() {
+
+	// connecting to DB
+	db, err := storage.Connect()
+	if err != nil {
+		log.Fatal("Error connecting to DB:", err)
+	}
+
+	// CLI prompt
 	fmt.Println("CLI CALCULATOR")
 	fmt.Println("Type a menu number and press Enter.")
 
@@ -27,11 +37,11 @@ func main() {
 
 		switch opt {
 		case 1:
-			runExpression(calculator, reader)
+			runExpression(calculator, reader, db)
 		case 2:
-			runEquation(calculator, reader)
+			runEquation(calculator, reader, db)
 		case 3:
-			runLinearSystem(calculator, reader)
+			runLinearSystem(calculator, reader, db)
 		case 4:
 			fmt.Println("Goodbye.")
 			return

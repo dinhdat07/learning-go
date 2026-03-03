@@ -3,13 +3,17 @@ package main
 import (
 	"bufio"
 	"calculator/internal/engine"
+	"calculator/internal/models"
 	"calculator/internal/solver"
+	"calculator/internal/storage"
 	"calculator/internal/utils"
+	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 )
 
-func runExpression(calculator *solver.Calculator, reader *bufio.Reader) {
+func runExpression(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
 	for {
 		fmt.Println("\nExpression Mode")
 		fmt.Println("Enter a mathematical expression to evaluate.")
@@ -21,15 +25,31 @@ func runExpression(calculator *solver.Calculator, reader *bufio.Reader) {
 			continue
 		}
 
+		start := time.Now()
 		ans, err := calculator.Handle(expr)
+		duration := time.Since(start)
+		durationMs := duration.Milliseconds()
+
 		if err != nil {
 			fmt.Printf("Could not evaluate expression: %v\n", err)
 			calculator.SetHasAns(false)
+
+			historyRecord := models.NewHistory(expr, ans, err, durationMs)
+			err := storage.SaveCalcHistory(db, historyRecord)
+			if err != nil {
+
+			}
+
 		} else {
 			ans = utils.CleanFloat(ans)
 			fmt.Printf("Result: %g\n", ans)
 			calculator.SetHasAns(true)
 			calculator.SetAns(ans)
+
+			historyRecord := models.NewHistory(expr, ans, err, durationMs)
+			err := storage.SaveCalcHistory(db, historyRecord)
+			if err != nil {
+			}
 		}
 
 		if isBack := chooseNextStep(calculator, reader, ans); isBack {
@@ -38,7 +58,7 @@ func runExpression(calculator *solver.Calculator, reader *bufio.Reader) {
 	}
 }
 
-func runEquation(calculator *solver.Calculator, reader *bufio.Reader) {
+func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
 	for {
 		fmt.Println("\nEquation Mode")
 		fmt.Print("\nLinear equation: a*x + b = 0")
@@ -97,7 +117,7 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader) {
 	}
 }
 
-func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader) {
+func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
 	for {
 		opt := utils.ReadInt(reader, "\nSolve Linear System\nEnter number of equations (0 to return to main menu):\n> ")
 
