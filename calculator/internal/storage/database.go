@@ -36,19 +36,17 @@ func Connect() (*sql.DB, error) {
 }
 
 func initTable(db *sql.DB) error {
-
-	_, err := db.Exec(`CREATE TABLE if not exists calc_history (
-						id BIGSERIAL PRIMARY KEY,
-						created_at TIMESTAMPZ NOT NULL DEFAULT NOW(),
-						EXPRESSION TEXT NOT NULL,
-						success BOOLEAN NOT NULL
-						result DOUBLE PRECISION,
-						error TEXT,
-						duration_ms INTEGER
-						);`)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := db.Exec(`
+	CREATE TABLE IF NOT EXISTS calc_history (
+		id BIGSERIAL PRIMARY KEY,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		mode TEXT NOT NULL,
+		input JSONB NOT NULL,
+		success BOOLEAN NOT NULL,
+		output JSONB,
+		error TEXT,
+		duration_ms BIGINT
+	);
+	`)
+	return err
 }

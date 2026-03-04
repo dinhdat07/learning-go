@@ -9,8 +9,17 @@ import (
 	"calculator/internal/utils"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"time"
+)
+
+type Mode string
+
+const (
+	expressionMode   = "expression"
+	equationMode     = "equation"
+	linearSystemMode = "linear_system"
 )
 
 func runExpression(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
@@ -33,23 +42,16 @@ func runExpression(calculator *solver.Calculator, reader *bufio.Reader, db *sql.
 		if err != nil {
 			fmt.Printf("Could not evaluate expression: %v\n", err)
 			calculator.SetHasAns(false)
-
-			historyRecord := models.NewHistory(expr, ans, err, durationMs)
-			err := storage.SaveCalcHistory(db, historyRecord)
-			if err != nil {
-
-			}
-
 		} else {
 			ans = utils.CleanFloat(ans)
 			fmt.Printf("Result: %g\n", ans)
 			calculator.SetHasAns(true)
 			calculator.SetAns(ans)
+		}
 
-			historyRecord := models.NewHistory(expr, ans, err, durationMs)
-			err := storage.SaveCalcHistory(db, historyRecord)
-			if err != nil {
-			}
+		historyRecord := models.NewHistory(expressionMode, expr, ans, err, durationMs)
+		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+			log.Printf("warn: could not save history: %v", err)
 		}
 
 		if isBack := chooseNextStep(calculator, reader, ans); isBack {
@@ -84,6 +86,7 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB
 			continue
 		}
 
+		start := time.Now()
 		nums, err := utils.ParseFloatList(line)
 		if err != nil {
 			fmt.Printf("Invalid number format: %v\n", err)
@@ -102,6 +105,8 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB
 		} else {
 			ans, err = engine.SolveQuadratic(nums)
 		}
+		duration := time.Since(start)
+		durationMs := duration.Milliseconds()
 
 		if err != nil {
 			fmt.Printf("Failed to solve the equation: %v\n", err)
@@ -109,6 +114,11 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB
 		} else {
 			utils.PrintSolutions(ans)
 			calculator.SetHasAns(true)
+		}
+
+		historyRecord := models.NewHistory(equationMode, line, ans, err, durationMs)
+		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+			log.Printf("warn: could not save history: %v", err)
 		}
 
 		if isBack := chooseNextStep(calculator, reader, ans...); isBack {
@@ -169,9 +179,10 @@ func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sq
 			}
 		}
 
-		fmt.Println("\nSolving the system...")
-
+		start := time.Now()
 		ans, err := engine.SolveLinearSystem(matrix)
+		duration := time.Since(start)
+		durationMs := duration.Milliseconds()
 		if err != nil {
 			fmt.Printf("Failed to solve the system: %v\n", err)
 			fmt.Println("The system may have no solution or infinitely many solutions.")
@@ -179,6 +190,11 @@ func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sq
 		} else {
 			utils.PrintSolutions(ans)
 			calculator.SetHasAns(true)
+		}
+
+		historyRecord := models.NewHistory(linearSystemMode, matrix, ans, err, durationMs)
+		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+			log.Printf("warn: could not save history: %v", err)
 		}
 
 		if isBack := chooseNextStep(calculator, reader, ans...); isBack {

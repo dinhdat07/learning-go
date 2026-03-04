@@ -2,28 +2,33 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
 type CalcHistory struct {
-	ID         int64
-	CreatedAt  time.Time
-	Expression string
-	Success    bool
-	Result     sql.NullFloat64
+	ID        int64
+	CreatedAt time.Time
+
+	Mode    string
+	Input   json.RawMessage
+	Success bool
+
+	Output     json.RawMessage
 	Error      sql.NullString
 	DurationMs int64
 }
 
-func NewHistory(expr string, ans float64, err error, duration int64) CalcHistory {
+func NewHistory(mode string, input any, output any, err error, duration int64) CalcHistory {
+	inputJson, _ := json.Marshal(input)
+	outputJson, _ := json.Marshal(output)
+
 	return CalcHistory{
-		Expression: expr,
+		Mode:       mode,
+		Input:      inputJson,
 		Success:    err == nil,
 		DurationMs: duration,
-		Result: sql.NullFloat64{
-			Float64: ans,
-			Valid:   err == nil,
-		},
+		Output:     outputJson,
 		Error: sql.NullString{
 			String: func() string {
 				if err != nil {
