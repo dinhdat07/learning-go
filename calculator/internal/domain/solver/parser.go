@@ -1,11 +1,10 @@
-package utils
+package solver
 
 import (
 	"strconv"
-	"strings"
 )
 
-func ParseNumber(input string, i int) (float64, int, error) {
+func parseNumber(input string, i int) (float64, int, error) {
 	start := i
 	dot := 0
 
@@ -36,7 +35,7 @@ func ParseNumber(input string, i int) (float64, int, error) {
 	return num, i - 1, nil
 }
 
-func ParseKeyword(input string, i int, ans, preAns float64, variables map[string]float64) (float64, int, error) {
+func parseKeyword(input string, i int, ans, preAns float64, variables map[string]float64) (float64, int, error) {
 	start := i
 
 	for i < len(input) {
@@ -61,19 +60,4 @@ func ParseKeyword(input string, i int, ans, preAns float64, variables map[string
 		}
 		return 0, i, ErrInvalidExpression
 	}
-}
-
-func ParseFloatList(s string) ([]float64, error) {
-	fields := strings.Fields(s)
-	output := make([]float64, 0, len(fields))
-
-	for _, v := range fields {
-		num, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			return nil, ErrInvalidFloatList
-		}
-		output = append(output, num)
-	}
-
-	return output, nil
 }

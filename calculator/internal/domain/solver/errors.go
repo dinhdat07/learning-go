@@ -1,7 +1,7 @@
 package solver
 
 import (
-	calError "calculator/internal/errors"
+	calError "calculator/internal/domain/errors"
 )
 
 var ErrInvalidExpression = &calError.SyntaxError{

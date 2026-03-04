@@ -1,9 +1,8 @@
 package solver
 
 import (
-	"calculator/internal/engine"
-	"calculator/internal/stack"
-	"calculator/internal/utils"
+	"calculator/internal/domain/engine"
+	"calculator/internal/domain/stack"
 )
 
 type Calculator struct {
@@ -86,7 +85,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 			continue
 		}
 
-		if utils.IsOperator(c) {
+		if c == '+' || c == '-' || c == '*' || c == '/' || c == '^' {
 			// check unary
 			if (c == '+' || c == '-') && !prevIsValue {
 				sign := 1.0
@@ -104,7 +103,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 				// next is number
 				next := input[i]
 				if (next >= '0' && next <= '9') || next == '.' {
-					num, nextI, err := utils.ParseNumber(input, i)
+					num, nextI, err := parseNumber(input, i)
 					if err != nil {
 						return 0, err
 					}
@@ -155,7 +154,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 		}
 
 		if (c >= '0' && c <= '9') || c == '.' {
-			num, nextI, err := utils.ParseNumber(input, i)
+			num, nextI, err := parseNumber(input, i)
 			if err != nil {
 				return 0, err
 			}
@@ -167,7 +166,7 @@ func (calculator *Calculator) Handle(input string) (float64, error) {
 		}
 
 		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
-			num, nextI, err := utils.ParseKeyword(input, i, calculator.ans, calculator.preAns, calculator.variables)
+			num, nextI, err := parseKeyword(input, i, calculator.ans, calculator.preAns, calculator.variables)
 			if err != nil {
 				return 0, err
 			}

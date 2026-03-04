@@ -1,7 +1,7 @@
 package engine
 
 import (
-	calError "calculator/internal/errors"
+	calError "calculator/internal/domain/errors"
 )
 
 var ErrDivideByZero = &calError.MathError{

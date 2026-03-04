@@ -39,7 +39,7 @@ The project follows the standard Go project layout to ensure modularity and main
     ├── solver/              # Solver Layer: Parsing & Stack Logic
     ├── engine/              # Engine Layer: Pure math & Equation solving
     ├── stack/               # Generic Stack implementation
-    ├── utils/               # Parsing, Formatting, & Input validation
+    ├── util/               # Parsing, Formatting, & Input validation
     └── errors/              # Custom error definitions
 
 ```
@@ -79,7 +79,7 @@ The solver’s precedence logic is specifically adjusted to delay the "pop" acti
 
 Following **IEEE-754 (float64)**, certain operations may result in precision artifacts (e.g., `15.999999999999998`).
 
-* **Solution:** The `utils` module implements formatted output and epsilon-based rounding to ensure user-friendly results.
+* **Solution:** The `util` module implements formatted output and epsilon-based rounding to ensure user-friendly results.
 
 ---
 

@@ -1,8 +1,8 @@
 package solver
 
 import (
-	"calculator/internal/engine"
-	"calculator/internal/stack"
+	"calculator/internal/domain/engine"
+	"calculator/internal/domain/stack"
 )
 
 func popAndCompute(NumStack *stack.Stack[float64], OpStack *stack.Stack[rune]) error {
