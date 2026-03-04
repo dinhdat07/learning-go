@@ -10,20 +10,25 @@ import (
 	"os"
 )
 
-func main() {
+type App struct {
+	calculator *solver.Calculator
+	db *storage.DB
+	reader *bufio.Reader
+}
 
-	// connecting to DB
-	db, err := storage.Connect()
-	if err != nil {
-		log.Fatal("Error connecting to DB:", err)
+
+func NewApp(db *sql.DB) *App {
+	return &App{
+		db:         db,
+		calculator: solver.NewCalculator(),
+		reader:     bufio.NewReader(os.Stdin),
 	}
+}
 
-	// CLI prompt
+
+func (app *App) Run() {
 	fmt.Println("CLI CALCULATOR")
 	fmt.Println("Type a menu number and press Enter.")
-
-	calculator := solver.NewCalculator()
-	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		opt := utils.ReadInt(reader,
@@ -37,11 +42,11 @@ func main() {
 
 		switch opt {
 		case 1:
-			runExpression(calculator, reader, db)
+			a.runExpression()
 		case 2:
-			runEquation(calculator, reader, db)
+			a.runEquation()
 		case 3:
-			runLinearSystem(calculator, reader, db)
+			a.runLinearSystem()
 		case 4:
 			fmt.Println("Goodbye.")
 			return
@@ -49,4 +54,17 @@ func main() {
 			fmt.Printf("Invalid option (%d). Please choose 1, 2, 3, or 4.\n", opt)
 		}
 	}
+}
+
+
+
+func main() {
+	db, err := storage.Connect()
+	if err != nil {
+		log.Fatal("Error connecting to DB:", err)
+	}
+	defer db.Close()
+
+	app := NewApp(db)
+	app.Run()
 }

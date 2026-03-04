@@ -6,7 +6,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func SolveLinearSystem(matrix [][]float64) ([]float64, error) {
+func (e *Engine) SolveLinearSystem(matrix [][]float64) ([]float64, error) {
 	if len(matrix) == 0 {
 		return nil, ErrLSCannotSolved
 	}

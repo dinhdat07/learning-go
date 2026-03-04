@@ -4,7 +4,9 @@ import (
 	"math"
 )
 
-func SolveLinear(nums []float64) ([]float64, error) {
+type Engine struct {}
+
+func (e *Engine) SolveLinear(nums []float64) ([]float64, error) {
 	// ax + b = 0
 	// x = -b/a
 	if len(nums) != 2 {
@@ -21,7 +23,7 @@ func SolveLinear(nums []float64) ([]float64, error) {
 	return []float64{res}, nil
 }
 
-func SolveQuadratic(nums []float64) ([]float64, error) {
+func (e *Engine) SolveQuadratic(nums []float64) ([]float64, error) {
 	// ax^2 + b^x + c = 0
 	// delta = b^2 - 4 *a*c
 
@@ -31,7 +33,7 @@ func SolveQuadratic(nums []float64) ([]float64, error) {
 
 	a, b, c := nums[0], nums[1], nums[2]
 	if a == 0 {
-		return SolveLinear(nums[1:3])
+		return e.SolveLinear(nums[1:3])
 	}
 
 	delta := b*b - 4*a*c

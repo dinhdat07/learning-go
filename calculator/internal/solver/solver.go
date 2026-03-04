@@ -10,6 +10,7 @@ type Calculator struct {
 	ans       float64
 	preAns    float64
 	variables map[string]float64
+	*Engine
 }
 
 func NewCalculator() *Calculator {
@@ -18,6 +19,7 @@ func NewCalculator() *Calculator {
 		ans:       0,
 		preAns:    0,
 		variables: make(map[string]float64),
+		Engine:    &Engine{},
 	}
 }
 

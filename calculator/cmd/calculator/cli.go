@@ -22,20 +22,20 @@ const (
 	linearSystemMode = "linear_system"
 )
 
-func runExpression(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
+func (app *App) runExpression() {
 	for {
 		fmt.Println("\nExpression Mode")
 		fmt.Println("Enter a mathematical expression to evaluate.")
 		fmt.Println("Examples: 2+3*4, (1+2)/3, ans+5 (if supported)")
 
-		expr := utils.ReadLine(reader, "> ")
+		expr := utils.ReadLine(app.reader, "> ")
 		if expr == "" {
 			fmt.Println("Input cannot be empty. Please enter an expression.")
 			continue
 		}
 
 		start := time.Now()
-		ans, err := calculator.Handle(expr)
+		ans, err := app.calculator.Handle(expr)
 		duration := time.Since(start)
 		durationMs := duration.Milliseconds()
 
@@ -50,22 +50,22 @@ func runExpression(calculator *solver.Calculator, reader *bufio.Reader, db *sql.
 		}
 
 		historyRecord := models.NewHistory(expressionMode, expr, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(calculator, reader, ans); isBack {
+		if isBack := chooseNextStep(); isBack {
 			return
 		}
 	}
 }
 
-func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
+func (app *App)  runEquation() {
 	for {
 		fmt.Println("\nEquation Mode")
 		fmt.Print("\nLinear equation: a*x + b = 0")
 		fmt.Print("\nQuadratic equation: a*x^2 + b*x + c = 0")
-		opt := utils.ReadInt(reader, "\nChoose equation degree (1 or 2). Enter 0 to return to main menu:\n>")
+		opt := utils.ReadInt(app.reader, "\nChoose equation degree (1 or 2). Enter 0 to return to main menu:\n>")
 		if opt == 0 {
 			fmt.Println("Returning to main menu.")
 			return
@@ -79,7 +79,7 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB
 		required := opt + 1
 		fmt.Printf("Enter %d numbers: \n", required)
 
-		line := utils.ReadLine(reader, "> ")
+		line := utils.ReadLine(app.reader, "> ")
 
 		if line == "" {
 			fmt.Printf("Input cannot be empty. Please enter exactly %d numbers.", required)
@@ -101,35 +101,35 @@ func runEquation(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB
 
 		var ans []float64
 		if opt == 1 {
-			ans, err = engine.SolveLinear(nums)
+			ans, err = app.calculator.SolveLinear(nums)
 		} else {
-			ans, err = engine.SolveQuadratic(nums)
+			ans, err = app.calculator.SolveQuadratic(nums)
 		}
 		duration := time.Since(start)
 		durationMs := duration.Milliseconds()
 
 		if err != nil {
 			fmt.Printf("Failed to solve the equation: %v\n", err)
-			calculator.SetHasAns(false)
+			app.calculator.SetHasAns(false)
 		} else {
 			utils.PrintSolutions(ans)
-			calculator.SetHasAns(true)
+			app.calculator.SetHasAns(true)
 		}
 
 		historyRecord := models.NewHistory(equationMode, line, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(calculator, reader, ans...); isBack {
+		if isBack := chooseNextStep(); isBack {
 			return
 		}
 	}
 }
 
-func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sql.DB) {
+func (app *App) runLinearSystem() {
 	for {
-		opt := utils.ReadInt(reader, "\nSolve Linear System\nEnter number of equations (0 to return to main menu):\n> ")
+		opt := utils.ReadInt(app.reader, "\nSolve Linear System\nEnter number of equations (0 to return to main menu):\n> ")
 
 		if opt < 0 {
 			fmt.Println("Invalid input. Please enter a non-negative integer (0, 1, 2, ...).")
@@ -154,7 +154,7 @@ func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sq
 		for i := 0; i < rows; i++ {
 			for {
 				prompt := fmt.Sprintf("\nEnter equation %d of %d (%d numbers required):\n> ", i+1, rows, cols)
-				line := utils.ReadLine(reader, prompt)
+				line := utils.ReadLine(app.reader, prompt)
 
 				if line == "" {
 					fmt.Printf("Input cannot be empty. Please enter exactly %d numbers.\n", cols)
@@ -180,90 +180,94 @@ func runLinearSystem(calculator *solver.Calculator, reader *bufio.Reader, db *sq
 		}
 
 		start := time.Now()
-		ans, err := engine.SolveLinearSystem(matrix)
+		ans, err := app.calculator.SolveLinearSystem(matrix)
 		duration := time.Since(start)
 		durationMs := duration.Milliseconds()
 		if err != nil {
 			fmt.Printf("Failed to solve the system: %v\n", err)
 			fmt.Println("The system may have no solution or infinitely many solutions.")
-			calculator.SetHasAns(false)
+			app.calculator.SetHasAns(false)
 		} else {
 			utils.PrintSolutions(ans)
-			calculator.SetHasAns(true)
+			app.calculator.SetHasAns(true)
 		}
 
 		historyRecord := models.NewHistory(linearSystemMode, matrix, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(db, historyRecord); err != nil {
+		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(calculator, reader, ans...); isBack {
+		if isBack := chooseNextStep(); isBack {
 			return
 		}
 	}
 }
 
-func chooseNextStep(calculator *solver.Calculator, reader *bufio.Reader, ans ...float64) (isBack bool) {
+func (app *App) chooseNextStep() (isBack bool) {
 	for {
-		opt := utils.ReadInt(reader, "\nWhat would you like to do next?\n1. Continue\n2. Save result to a variable\n3. Exit this mode\n> ")
+		opt := utils.ReadInt(app.reader, "\nWhat would you like to do next?\n1. Continue\n2. Save result to a variable\n3. Exit this mode\n> ")
 
 		switch opt {
 		case 1:
 			return false
 
 		case 2:
-			if !calculator.HasAns() {
-				fmt.Println("There is no valid result to save. Please compute a valid result first.")
-				continue
-			}
-
-			if len(ans) == 0 {
-				fmt.Println("There is no result available to save.")
-				continue
-			}
-
-			chosenAns := ans[0]
-			if len(ans) > 1 {
-				fmt.Println("\nMultiple results detected.")
-				fmt.Println("Select which result to save (1-based index).")
-				for {
-					index := utils.ReadInt(reader, "> ")
-					if index <= 0 || index > len(ans) {
-						fmt.Printf("Invalid index. Please choose a number between 1 and %d.\n", len(ans))
-						continue
-					}
-					chosenAns = ans[index-1]
-					break
-				}
-			}
-
-			for {
-				name := utils.ReadLine(reader, "Enter variable name (only letters, no spaces):\n> ")
-				name = strings.TrimSpace(name)
-
-				if name == "" {
-					fmt.Println("Variable name cannot be empty.")
-					continue
-				}
-				if strings.ContainsAny(name, " \t\n") {
-					fmt.Println("Variable name cannot contain spaces. Please try again.")
-					continue
-				}
-
-				if err := calculator.SaveVar(name, chosenAns); err != nil {
-					fmt.Printf("Could not save variable: %v\n", err)
-					continue
-				}
-
-				fmt.Printf("Saved '%s' = %g\n", name, chosenAns)
-				return true
-			}
-
+			return app.saveAnsToVar(ans)
 		case 3:
 			return true
 
 		default:
 			fmt.Println("Invalid option. Please choose 1, 2, or 3.")
 		}
+	}
+}
+
+
+func (app *App) saveAnsToVar(ans []float64) bool {
+	if !app.calculator.HasAns() {
+		fmt.Println("There is no valid result to save. Please compute a valid result first.")
+		continue
+	}
+
+	if len(ans) == 0 {
+		fmt.Println("There is no result available to save.")
+		continue
+	}
+
+	chosenAns := ans[0]
+	if len(ans) > 1 {
+		fmt.Println("\nMultiple results detected.")
+		fmt.Println("Select which result to save (1-based index).")
+		for {
+			index := utils.ReadInt(app.reader, "> ")
+			if index <= 0 || index > len(ans) {
+				fmt.Printf("Invalid index. Please choose a number between 1 and %d.\n", len(ans))
+				continue
+			}
+			chosenAns = ans[index-1]
+			break
+		}
+	}
+
+	for {
+		name := utils.ReadLine(reader, "Enter variable name (only letters, no spaces):\n> ")
+		name = strings.TrimSpace(name)
+
+		if name == "" {
+			fmt.Println("Variable name cannot be empty.")
+			continue
+		}
+		if strings.ContainsAny(name, " \t\n") {
+			fmt.Println("Variable name cannot contain spaces. Please try again.")
+			continue
+		}
+
+		if err := app.calculator.SaveVar(name, chosenAns); err != nil {
+			fmt.Printf("Could not save variable: %v\n", err)
+			continue
+		}
+
+		fmt.Printf("Saved '%s' = %g\n", name, chosenAns)
+		return true
 	}
 }
