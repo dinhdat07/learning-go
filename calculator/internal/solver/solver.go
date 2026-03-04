@@ -1,6 +1,7 @@
 package solver
 
 import (
+	"calculator/internal/engine"
 	"calculator/internal/stack"
 	"calculator/internal/utils"
 )
@@ -10,7 +11,7 @@ type Calculator struct {
 	ans       float64
 	preAns    float64
 	variables map[string]float64
-	*Engine
+	*engine.Engine
 }
 
 func NewCalculator() *Calculator {
@@ -19,7 +20,7 @@ func NewCalculator() *Calculator {
 		ans:       0,
 		preAns:    0,
 		variables: make(map[string]float64),
-		Engine:    &Engine{},
+		Engine:    &engine.Engine{},
 	}
 }
 

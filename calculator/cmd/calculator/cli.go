@@ -1,25 +1,12 @@
 package main
 
 import (
-	"bufio"
-	"calculator/internal/engine"
 	"calculator/internal/models"
-	"calculator/internal/solver"
-	"calculator/internal/storage"
 	"calculator/internal/utils"
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"time"
-)
-
-type Mode string
-
-const (
-	expressionMode   = "expression"
-	equationMode     = "equation"
-	linearSystemMode = "linear_system"
 )
 
 func (app *App) runExpression() {
@@ -41,26 +28,26 @@ func (app *App) runExpression() {
 
 		if err != nil {
 			fmt.Printf("Could not evaluate expression: %v\n", err)
-			calculator.SetHasAns(false)
+			app.calculator.SetHasAns(false)
 		} else {
 			ans = utils.CleanFloat(ans)
 			fmt.Printf("Result: %g\n", ans)
-			calculator.SetHasAns(true)
-			calculator.SetAns(ans)
+			app.calculator.SetHasAns(true)
+			app.calculator.SetAns(ans)
 		}
 
-		historyRecord := models.NewHistory(expressionMode, expr, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
+		historyRecord := models.NewHistory(models.ExpressionMode, expr, ans, err, durationMs)
+		if err := app.historyRepo.SaveHistory(historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(); isBack {
+		if isBack := app.chooseNextStep(ans); isBack {
 			return
 		}
 	}
 }
 
-func (app *App)  runEquation() {
+func (app *App) runEquation() {
 	for {
 		fmt.Println("\nEquation Mode")
 		fmt.Print("\nLinear equation: a*x + b = 0")
@@ -116,12 +103,12 @@ func (app *App)  runEquation() {
 			app.calculator.SetHasAns(true)
 		}
 
-		historyRecord := models.NewHistory(equationMode, line, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
+		historyRecord := models.NewHistory(models.EquationMode, line, ans, err, durationMs)
+		if err := app.historyRepo.SaveHistory(historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(); isBack {
+		if isBack := app.chooseNextStep(ans...); isBack {
 			return
 		}
 	}
@@ -192,18 +179,18 @@ func (app *App) runLinearSystem() {
 			app.calculator.SetHasAns(true)
 		}
 
-		historyRecord := models.NewHistory(linearSystemMode, matrix, ans, err, durationMs)
-		if err := storage.SaveCalcHistory(app.db, historyRecord); err != nil {
+		historyRecord := models.NewHistory(models.LinearSystemMode, matrix, ans, err, durationMs)
+		if err := app.historyRepo.SaveHistory(historyRecord); err != nil {
 			log.Printf("warn: could not save history: %v", err)
 		}
 
-		if isBack := chooseNextStep(); isBack {
+		if isBack := app.chooseNextStep(ans...); isBack {
 			return
 		}
 	}
 }
 
-func (app *App) chooseNextStep() (isBack bool) {
+func (app *App) chooseNextStep(ans ...float64) (isBack bool) {
 	for {
 		opt := utils.ReadInt(app.reader, "\nWhat would you like to do next?\n1. Continue\n2. Save result to a variable\n3. Exit this mode\n> ")
 
@@ -222,16 +209,15 @@ func (app *App) chooseNextStep() (isBack bool) {
 	}
 }
 
-
 func (app *App) saveAnsToVar(ans []float64) bool {
 	if !app.calculator.HasAns() {
 		fmt.Println("There is no valid result to save. Please compute a valid result first.")
-		continue
+		return false
 	}
 
 	if len(ans) == 0 {
 		fmt.Println("There is no result available to save.")
-		continue
+		return false
 	}
 
 	chosenAns := ans[0]
@@ -250,7 +236,7 @@ func (app *App) saveAnsToVar(ans []float64) bool {
 	}
 
 	for {
-		name := utils.ReadLine(reader, "Enter variable name (only letters, no spaces):\n> ")
+		name := utils.ReadLine(app.reader, "Enter variable name (only letters, no spaces):\n> ")
 		name = strings.TrimSpace(name)
 
 		if name == "" {

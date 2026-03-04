@@ -11,43 +11,44 @@ import (
 )
 
 type App struct {
-	calculator *solver.Calculator
-	db *storage.DB
-	reader *bufio.Reader
+	calculator  *solver.Calculator
+	historyRepo *storage.HistoryRepo
+	reader      *bufio.Reader
 }
 
-
-func NewApp(db *sql.DB) *App {
+func NewApp(repo *storage.HistoryRepo) *App {
 	return &App{
-		db:         db,
-		calculator: solver.NewCalculator(),
-		reader:     bufio.NewReader(os.Stdin),
+		historyRepo: repo,
+		calculator:  solver.NewCalculator(),
+		reader:      bufio.NewReader(os.Stdin),
 	}
 }
-
 
 func (app *App) Run() {
 	fmt.Println("CLI CALCULATOR")
 	fmt.Println("Type a menu number and press Enter.")
 
 	for {
-		opt := utils.ReadInt(reader,
+		opt := utils.ReadInt(app.reader,
 			"\nMain Menu\n"+
 				"1. Expression\n"+
 				"2. Equation\n"+
 				"3. Linear System\n"+
-				"4. Exit\n"+
+				"4. History\n"+
+				"5. Exit\n"+
 				"> ",
 		)
 
 		switch opt {
 		case 1:
-			a.runExpression()
+			app.runExpression()
 		case 2:
-			a.runEquation()
+			app.runEquation()
 		case 3:
-			a.runLinearSystem()
+			app.runLinearSystem()
 		case 4:
+			// app.runHistory()
+		case 5:
 			fmt.Println("Goodbye.")
 			return
 		default:
@@ -56,15 +57,14 @@ func (app *App) Run() {
 	}
 }
 
-
-
 func main() {
 	db, err := storage.Connect()
+	historyRepo := storage.NewHistoryRepo(db)
 	if err != nil {
 		log.Fatal("Error connecting to DB:", err)
 	}
 	defer db.Close()
 
-	app := NewApp(db)
+	app := NewApp(historyRepo)
 	app.Run()
 }
