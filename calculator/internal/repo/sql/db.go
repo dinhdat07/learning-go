@@ -1,17 +1,10 @@
-package db
+package sql
 
 import (
 	"database/sql"
 	"log"
 	"os"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/joho/godotenv"
 )
-
-func init() {
-	godotenv.Load()
-}
 
 func Connect() (*sql.DB, error) {
 	connStr := os.Getenv("DATABASE_URL")
@@ -25,7 +18,7 @@ func Connect() (*sql.DB, error) {
 		return nil, err
 	}
 
-	log.Println("Connected to DB succesfully!")
+	log.Println("[SQL] Connected to DB succesfully!")
 
 	err = initTable(db)
 	if err != nil {

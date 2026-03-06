@@ -5,7 +5,6 @@ import (
 	"calculator/internal/repo"
 	"calculator/internal/service"
 	util "calculator/internal/util"
-	"database/sql"
 	"fmt"
 	"os"
 )
@@ -16,13 +15,11 @@ type App struct {
 	reader            *bufio.Reader
 }
 
-func NewApp(db *sql.DB) *App {
+func NewApp(repo repo.HistoryRepo) *App {
 	// repo
-	historyRepo := repo.NewHistoryRepo(db)
-
 	// service
 	svc := service.NewCalculatorService()
-	historySvc := service.NewHistoryService(historyRepo)
+	historySvc := service.NewHistoryService(repo)
 
 	return &App{
 		calculatorService: svc,

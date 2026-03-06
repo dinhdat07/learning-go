@@ -8,17 +8,22 @@ import (
 )
 
 type CalcHistory struct {
-	ID        int64
-	CreatedAt time.Time
+	ID        int64     `gorm:"primaryKey;autoIncrement"`
+	CreatedAt time.Time `gorm:"autoCreateTime; not null"`
 
-	Mode    Mode
-	Input   json.RawMessage
-	Success bool
+	Mode    Mode            `gorm:"type:text;not null"`
+	Input   json.RawMessage `gorm:"type:jsonb;not null"`
+	Success bool            `gorm:"not null"`
 
-	Output     json.RawMessage
+	Output     json.RawMessage `gorm:"type:jsonb"`
 	Error      sql.NullString
 	DurationMs int64
 	Note       sql.NullString
+}
+
+// to set the name of the table instead of pluralizing
+func (CalcHistory) TableName() string {
+	return "calc_history"
 }
 
 func NewHistory(mode Mode, input any, output any, err error, duration int64) CalcHistory {
