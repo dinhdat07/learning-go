@@ -45,7 +45,8 @@ func initTable(db *sql.DB) error {
 		success BOOLEAN NOT NULL,
 		output JSONB,
 		error TEXT,
-		duration_ms BIGINT
+		duration_ms BIGINT,
+		note TEXT
 	);
 	`)
 	return err

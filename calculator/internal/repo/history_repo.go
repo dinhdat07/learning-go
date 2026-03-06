@@ -3,6 +3,7 @@ package repo
 import (
 	"calculator/internal/model"
 	"database/sql"
+	"encoding/json"
 	"errors"
 )
 
@@ -45,8 +46,9 @@ func (r *HistoryRepo) List(limit int) ([]model.CalcHistory, error) {
 		return nil, err
 	}
 
-	history := make([]model.CalcHistory, limit)
+	var history []model.CalcHistory
 	for rows.Next() {
+		var outputBytes []byte
 		h := model.CalcHistory{}
 		err := rows.Scan(
 			&h.ID,
@@ -54,12 +56,18 @@ func (r *HistoryRepo) List(limit int) ([]model.CalcHistory, error) {
 			&h.Mode,
 			&h.Input,
 			&h.Success,
-			&h.Output,
+			&outputBytes,
 			&h.Error,
 			&h.DurationMs,
+			&h.Note,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if outputBytes != nil {
+			h.Output = json.RawMessage(outputBytes)
+		} else {
+			h.Output = nil
 		}
 		history = append(history, h)
 	}

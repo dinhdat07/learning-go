@@ -33,6 +33,7 @@ func (svc *CalculatorService) EvalExpression(expr string) (float64, error, int64
 		svc.calculator.SetHasAns(true)
 		svc.calculator.SetAns(ans)
 	}
+
 	return ans, err, durationMs
 }
 
