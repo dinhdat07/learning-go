@@ -75,6 +75,34 @@ func (r *HistoryRepo) List(limit int) ([]model.CalcHistory, error) {
 	return history, nil
 }
 
+func (r *HistoryRepo) Get(id int64) (*model.CalcHistory, error) {
+	row := r.db.QueryRow(`SELECT * FROM calc_history WHERE id = $1`, id)
+
+	var outputBytes []byte
+	h := model.CalcHistory{}
+	err := row.Scan(
+		&h.ID,
+		&h.CreatedAt,
+		&h.Mode,
+		&h.Input,
+		&h.Success,
+		&outputBytes,
+		&h.Error,
+		&h.DurationMs,
+		&h.Note,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	if outputBytes != nil {
+		h.Output = json.RawMessage(outputBytes)
+	} else {
+		h.Output = nil
+	}
+	return &h, nil
+}
+
 func (r *HistoryRepo) Delete(id int64) error {
 	res, err := r.db.Exec(`DELETE FROM calc_history WHERE id = $1`, id)
 	if err != nil {

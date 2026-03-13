@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"calculator/internal/repo"
+	"calculator/internal/repo/elasticsearch"
 	"calculator/internal/service"
 	util "calculator/internal/util"
 	"fmt"
@@ -15,11 +16,11 @@ type App struct {
 	reader            *bufio.Reader
 }
 
-func NewApp(repo repo.HistoryRepo) *App {
+func NewApp(repo repo.HistoryRepo, indexer elasticsearch.HistoryIndexer) *App {
 	// repo
 	// service
 	svc := service.NewCalculatorService()
-	historySvc := service.NewHistoryService(repo)
+	historySvc := service.NewHistoryService(repo, indexer)
 
 	return &App{
 		calculatorService: svc,

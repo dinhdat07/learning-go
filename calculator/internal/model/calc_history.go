@@ -16,9 +16,9 @@ type CalcHistory struct {
 	Success bool            `gorm:"not null"`
 
 	Output     json.RawMessage `gorm:"type:jsonb"`
-	Error      sql.NullString
-	DurationMs int64
-	Note       sql.NullString
+	Error      sql.NullString  `json:"error"`
+	DurationMs int64           `json:"duration_ms"`
+	Note       sql.NullString  `json:"note"`
 }
 
 // to set the name of the table instead of pluralizing

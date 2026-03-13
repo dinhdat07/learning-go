@@ -45,6 +45,20 @@ func (r *HistoryRepo) List(limit int) ([]model.CalcHistory, error) {
 	return history, nil
 }
 
+func (r *HistoryRepo) Get(id int64) (*model.CalcHistory, error) {
+
+	var history model.CalcHistory
+	var result *gorm.DB
+
+	result = r.db.First(&history, id)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &history, nil
+}
+
 func (r *HistoryRepo) Delete(id int64) error {
 	result := r.db.Delete(&model.CalcHistory{}, id)
 	if result.Error != nil {

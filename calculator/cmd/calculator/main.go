@@ -3,6 +3,7 @@ package main
 import (
 	"calculator/internal/cli"
 	"calculator/internal/repo"
+	"calculator/internal/repo/elasticsearch"
 	g "calculator/internal/repo/gorm"
 	s "calculator/internal/repo/sql"
 	"fmt"
@@ -35,7 +36,14 @@ func main() {
 		historyRepo = s.NewHistoryRepo(db)
 	}
 
-	app := cli.NewApp(historyRepo)
+	es, err := elasticsearch.Connect()
+	if err != nil {
+		log.Fatal("Error connecting to ElasticSearch:", err)
+	}
+
+	historyIndexer := elasticsearch.NewHistoryIndexer(es)
+
+	app := cli.NewApp(historyRepo, *historyIndexer)
 
 	app.Run()
 }
