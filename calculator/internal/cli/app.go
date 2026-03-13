@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"calculator/internal/repo"
 	"calculator/internal/repo/elasticsearch"
+	g "calculator/internal/repo/gorm"
+	s "calculator/internal/repo/sql"
 	"calculator/internal/service"
-	util "calculator/internal/util"
+	"calculator/internal/util"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -16,11 +19,35 @@ type App struct {
 	reader            *bufio.Reader
 }
 
-func NewApp(repo repo.HistoryRepo, indexer elasticsearch.HistoryIndexer) *App {
-	// repo
-	// service
+func NewApp() *App {
+	var historyRepo repo.HistoryRepo
+	mode := os.Args[1]
+	switch mode {
+	case "gorm":
+		db, err := g.Connect()
+		if err != nil {
+			log.Fatal("Error connecting to DB:", err)
+		}
+		historyRepo = g.NewHistoryRepo(db)
+
+	case "sql":
+		db, err := s.Connect()
+		if err != nil {
+			log.Fatal("Error connecting to DB:", err)
+		}
+		defer db.Close()
+		historyRepo = s.NewHistoryRepo(db)
+	}
+
+	es, err := elasticsearch.Connect()
+	if err != nil {
+		log.Fatal("Error connecting to ElasticSearch:", err)
+	}
+
+	historyIndexer := elasticsearch.NewHistoryIndexer(es)
+
 	svc := service.NewCalculatorService()
-	historySvc := service.NewHistoryService(repo, indexer)
+	historySvc := service.NewHistoryService(historyRepo, *historyIndexer)
 
 	return &App{
 		calculatorService: svc,

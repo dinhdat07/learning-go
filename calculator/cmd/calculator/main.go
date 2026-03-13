@@ -2,12 +2,8 @@ package main
 
 import (
 	"calculator/internal/cli"
-	"calculator/internal/repo"
-	"calculator/internal/repo/elasticsearch"
-	g "calculator/internal/repo/gorm"
-	s "calculator/internal/repo/sql"
+	"calculator/internal/util"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -17,33 +13,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var historyRepo repo.HistoryRepo
-	mode := os.Args[1]
-	switch mode {
-	case "gorm":
-		db, err := g.Connect()
-		if err != nil {
-			log.Fatal("Error connecting to DB:", err)
-		}
-		historyRepo = g.NewHistoryRepo(db)
-
-	case "sql":
-		db, err := s.Connect()
-		if err != nil {
-			log.Fatal("Error connecting to DB:", err)
-		}
-		defer db.Close()
-		historyRepo = s.NewHistoryRepo(db)
-	}
-
-	es, err := elasticsearch.Connect()
-	if err != nil {
-		log.Fatal("Error connecting to ElasticSearch:", err)
-	}
-
-	historyIndexer := elasticsearch.NewHistoryIndexer(es)
-
-	app := cli.NewApp(historyRepo, *historyIndexer)
-
+	util.InitLogger()
+	app := cli.NewApp()
 	app.Run()
 }

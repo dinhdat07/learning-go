@@ -3,6 +3,7 @@ package cli
 import (
 	"calculator/internal/util"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -43,7 +44,7 @@ func (app *App) listHistory() {
 
 	list, err := app.historyService.List(limit)
 	if err != nil {
-		fmt.Printf("Internal error with database: %v\n", err)
+		log.Printf("Internal error with database: %v\n", err)
 		return
 	}
 
@@ -65,7 +66,7 @@ func (app *App) updateHistoryNote() {
 	note := util.ReadLine(app.reader, "> ")
 
 	if err := app.historyService.UpdateNote(int64(id), note); err != nil {
-		fmt.Printf("Internal error with database: %v\n", err)
+		log.Printf("Internal error with database: %v\n", err)
 		return
 	}
 
@@ -83,7 +84,7 @@ func (app *App) deleteHistory() {
 	}
 
 	if err := app.historyService.Delete(id); err != nil {
-		fmt.Printf("Internal error with database: %v\n", err)
+		log.Printf("Internal error with database: %v\n", err)
 		return
 	}
 
@@ -99,7 +100,7 @@ func (app *App) clearHistory() {
 	}
 
 	if err := app.historyService.Clear(); err != nil {
-		fmt.Printf("Internal error with database: %v\n", err)
+		log.Printf("Internal error with database: %v\n", err)
 		return
 	}
 
