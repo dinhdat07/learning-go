@@ -5,6 +5,7 @@ import (
 	"calculator/internal/model"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/elastic/go-elasticsearch/v9"
 )
@@ -41,6 +42,35 @@ func (r *HistoryIndexer) Index(record model.CalcHistory) error {
 	defer res.Body.Close()
 	if res.IsError() {
 		return fmt.Errorf("elasticsearch clear error: %s", res.String())
+	}
+
+	return nil
+}
+
+func (r *HistoryIndexer) BulkIndex(records []model.CalcHistory) error {
+	var buf bytes.Buffer
+
+	for _, record := range records {
+		meta := fmt.Sprintf(`{ "index": { "_index": "calc-history", "_id": "%d" } }%s`, record.ID, "\n")
+		buf.WriteString(meta)
+
+		doc := toESDoc(record)
+		data, _ := json.Marshal(doc)
+
+		buf.Write(data)
+		buf.WriteString("\n")
+	}
+
+	res, err := r.es.Bulk(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		body, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("bulk error: %s", string(body))
 	}
 
 	return nil

@@ -17,7 +17,7 @@ func NewHistoryRepo(db *sql.DB) *HistoryRepo {
 	return &HistoryRepo{db: db}
 }
 
-func (r *HistoryRepo) Save(h model.CalcHistory) error {
+func (r *HistoryRepo) Save(h *model.CalcHistory) error {
 	_, err := r.db.Exec(`
 		INSERT INTO calc_history (mode, input, success, output, error, duration_ms)
 		VALUES ($1, $2, $3, $4, $5, $6)

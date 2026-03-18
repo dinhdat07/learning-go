@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"calculator/internal/model"
 	"log"
 	"os"
 
@@ -14,8 +15,13 @@ func init() {
 }
 
 func Connect() (*gorm.DB, error) {
-	dsn := os.Getenv("POSTGRES_DNS")
+	dsn := os.Getenv("POSTGRES_DSN")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	err = Migrate(db)
 	if err != nil {
 		return nil, err
 	}
@@ -24,6 +30,6 @@ func Connect() (*gorm.DB, error) {
 	return db, nil
 }
 
-func Migrate() {
-
+func Migrate(db *gorm.DB) error {
+	return db.AutoMigrate(&model.CalcHistory{})
 }

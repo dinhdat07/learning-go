@@ -6,7 +6,7 @@ import (
 )
 
 type HistoryRepo interface {
-	Save(h model.CalcHistory) error
+	Save(h *model.CalcHistory) error
 	List(limit int) ([]model.CalcHistory, error)
 	Delete(id int64) error
 	Get(id int64) (*model.CalcHistory, error)

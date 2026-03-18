@@ -18,7 +18,7 @@ func NewHistoryRepo(db *gorm.DB) *HistoryRepo {
 	return &HistoryRepo{db: db}
 }
 
-func (r *HistoryRepo) Save(h model.CalcHistory) error {
+func (r *HistoryRepo) Save(h *model.CalcHistory) error {
 	result := r.db.Create(&h)
 	if result.Error != nil {
 		return result.Error

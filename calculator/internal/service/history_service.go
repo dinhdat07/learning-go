@@ -19,7 +19,7 @@ func NewHistoryService(r repo.HistoryRepo, i elasticsearch.HistoryIndexer) *Hist
 
 func (svc *HistoryService) Save(mode model.Mode, input any, output any, err error, duration int64) {
 	historyRecord := model.NewHistory(mode, input, output, err, duration)
-	if err := svc.historyRepo.Save(historyRecord); err != nil {
+	if err := svc.historyRepo.Save(&historyRecord); err != nil {
 		log.Printf("warn: could not save history: %v", err)
 		return
 	}
@@ -29,6 +29,15 @@ func (svc *HistoryService) Save(mode model.Mode, input any, output any, err erro
 			log.Printf("warn: failed to index history to es: %v", err)
 		}
 	}()
+}
+
+func (svc *HistoryService) SaveOnly(mode model.Mode, input any, output any, err error, duration int64) (model.CalcHistory, error) {
+	historyRecord := model.NewHistory(mode, input, output, err, duration)
+	if err := svc.historyRepo.Save(&historyRecord); err != nil {
+		log.Printf("warn: could not save history: %v", err)
+		return model.CalcHistory{}, err
+	}
+	return historyRecord, nil
 }
 
 func (svc *HistoryService) List(limit int) ([]model.CalcHistory, error) {
