@@ -11,22 +11,72 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  elasticsearch:
+
+  es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: es01
+    restart: always
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false # Disable security for development purposes
+      - node.name=es01
+      - cluster.name=calc-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/backup
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
     ports:
-      - "9200:9200" # Expose HTTP port for REST API
-      - "9300:9300" # Expose transport port for cluster communication
+      - "9200:9200"
+    volumes:
+      - esdata01:/usr/share/elasticsearch/data
+      - ./es_backup:/usr/share/elasticsearch/backup
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: es02
+    restart: always
+    environment:
+      - node.name=es02
+      - cluster.name=calc-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/backup
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    volumes:
+      - esdata02:/usr/share/elasticsearch/data
+      - ./es_backup:/usr/share/elasticsearch/backup
+
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: es03
+    restart: always
+    environment:
+      - node.name=es03
+      - cluster.name=calc-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/backup
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    volumes:
+      - esdata03:/usr/share/elasticsearch/data
+      - ./es_backup:/usr/share/elasticsearch/backup
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    restart: always
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200 # Connect Kibana to Elasticsearch
+      - ELASTICSEARCH_HOSTS=http://es01:9200
     ports:
       - "5601:5601"
     depends_on:
-      - elasticsearch
+      - es01
+      - es02
+      - es03
 
 volumes:
   postgres_data:
+  esdata01:
+  esdata02:
+  esdata03:
